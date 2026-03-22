@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chordhood">
+<title>Chordhood Web Beta</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+button{font-family:Georgia,serif;cursor:pointer;}
+
+/* ── THEMES ── */
+body.theme-grey{
+  --bg:#e8e8ec;--border:#b8b8c0;--border2:#c4c4cc;
+  --text:#222;--text2:#555;--text3:#888;--text4:#aaa;
+  --card:#f0f0f4;--header:linear-gradient(135deg,#d8d8de,#ccccd2);
+  --sidebar:#d4d4da;--prac-bar:#d0d0d6;
+  --q-item:rgba(0,0,0,0.04);--q-border:#c0c0c8;
+  --del:#999;--group-lbl:#aaa;--popup-bg:#e4e4e8;
+}
+body.theme-dark{
+  --bg:#0f0f13;--border:#1a1a26;--border2:#252535;
+  --text:#f0f0f0;--text2:#777;--text3:#555;--text4:#333;
+  --card:#1a1a26;--header:linear-gradient(135deg,#1a1a24,#12121a);
+  --sidebar:#0e0e18;--prac-bar:#11111a;
+  --q-item:rgba(255,255,255,0.025);--q-border:#1e1e2a;
+  --del:#333;--group-lbl:#252535;--popup-bg:#16161e;
+}
+body.theme-light{
+  --bg:#f5f5f0;--border:#d0d0c8;--border2:#c8c8c0;
+  --text:#1a1a1a;--text2:#444;--text3:#888;--text4:#bbb;
+  --card:#fff;--header:linear-gradient(135deg,#f0efe8,#e8e7e0);
+  --sidebar:#eaeae4;--prac-bar:#ededea;
+  --q-item:rgba(0,0,0,0.03);--q-border:#d4d4cc;
+  --del:#bbb;--group-lbl:#ccc;--popup-bg:#f8f8f4;
+}
+
+body{background:var(--bg);color:var(--text);font-family:Georgia,serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;transition:background 0.2s,color 0.2s;}
+
+/* ── HEADER ── */
+#header{background:var(--header);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;z-index:100;}
+#header .title{font-size:15px;font-weight:bold;color:var(--text);}
+#header .sub{font-size:10px;color:var(--text3);font-style:italic;margin-top:1px;}
+.hdr-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(128,128,128,0.08);border:1.5px solid var(--border2);border-radius:9px;padding:6px 10px;color:var(--text2);position:relative;}
+.hdr-btn.active{background:rgba(255,107,107,0.12);border-color:rgba(255,107,107,0.4);}
+.hdr-icon{font-size:16px;display:inline-block;}
+.hdr-lbl{font-size:8px;color:var(--text3);}
+#rotIcon{transition:transform 0.35s cubic-bezier(.4,0,.2,1);}
+
+/* ── METRO LIGHT (in header) ── */
+#metro-light{width:14px;height:14px;border-radius:50%;background:var(--border2);position:absolute;top:6px;right:6px;transition:background 0.06s,box-shadow 0.06s;pointer-events:none;}
+#metro-light.ml-beat{background:#6BCB77;box-shadow:0 0 8px 3px rgba(107,203,119,0.8);}
+#metro-light.ml-accent{background:#FF6B6B;box-shadow:0 0 8px 3px rgba(255,107,107,0.8);}
+#metro-light.ml-green{background:#6BCB77;box-shadow:0 0 10px 4px rgba(107,203,119,0.9);}
+#metro-light.ml-red{background:#FF6B6B;box-shadow:0 0 10px 4px rgba(255,107,107,0.9);}
+
+/* ── POPUPS ── */
+.popup-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.3);}
+.popup-overlay.open{display:block;}
+.popup-box{position:absolute;top:58px;background:var(--popup-bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:260px;}
+#metro-popup-box{right:120px;}
+#tuner-popup-box{right:40px;}
+.popup-title{font-size:11px;font-weight:bold;color:var(--text2);letter-spacing:0.5px;margin-bottom:14px;}
+.popup-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.popup-label{font-size:10px;color:var(--text3);min-width:64px;}
+
+/* BPM controls */
+#bpm-display{font-size:20px;font-weight:bold;color:var(--text);font-family:monospace;min-width:42px;text-align:center;}
+.bpm-btn{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;}
+#bpm-slider{-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border2);outline:none;flex:1;cursor:pointer;}
+#bpm-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#FF6B6B;cursor:pointer;}
+#metro-toggle{width:100%;padding:8px;border-radius:8px;border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:13px;margin-top:4px;}
+#metro-toggle.running{background:rgba(255,107,107,0.15);border-color:rgba(255,107,107,0.5);color:#FF6B6B;}
+#beats-select{font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--card);color:var(--text);cursor:pointer;}
+
+/* Switch toggle */
+.switch-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:10px;border-top:1px solid var(--border);}
+.switch-label{font-size:11px;color:var(--text2);}
+.switch{position:relative;width:38px;height:22px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider-sw{position:absolute;inset:0;background:var(--border2);border-radius:22px;transition:0.2s;cursor:pointer;}
+.slider-sw:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s;}
+input:checked + .slider-sw{background:#6BCB77;}
+input:checked + .slider-sw:before{transform:translateX(16px);}
+
+/* ── MAIN LAYOUT ── */
+#body{display:flex;flex:1;overflow:hidden;}
+#left{width:160px;background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;padding:10px 6px;flex-shrink:0;}
+.group-label{color:var(--group-lbl);font-size:8px;letter-spacing:1.5px;margin-bottom:4px;margin-top:10px;padding-left:3px;}
+.chord-btn{width:100%;padding:6px 8px;text-align:left;background:transparent;border:1.5px solid transparent;border-radius:6px;margin-bottom:1px;}
+.chord-btn.active{background:rgba(255,107,107,0.12);border-color:rgba(255,107,107,0.35);}
+.chord-btn .cn{font-size:12px;font-weight:bold;color:var(--text2);font-family:monospace;}
+.chord-btn.active .cn{color:#FF6B6B;}
+.chord-btn .ct{font-size:9px;color:var(--text3);margin-top:1px;}
+#center{flex:1;min-height:0;overflow-y:auto;padding:20px 16px;background:var(--bg);}
+#variations{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;}
+.var-card{background:var(--card);border-radius:14px;padding:16px 18px;border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.var-label{color:var(--text3);font-size:11px;}
+.add-btn{margin-top:2px;padding:6px 16px;background:rgba(107,203,119,0.12);border:1.5px solid rgba(107,203,119,0.4);border-radius:8px;color:#4aaa55;font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px;}
+.legend{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:3px;border-radius:20px;padding:3px 9px;}
+.legend-dot{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#111;flex-shrink:0;}
+#right{width:200px;background:var(--sidebar);border-left:1px solid var(--border);padding:11px 8px;overflow-y:auto;flex-shrink:0;}
+.q-title{color:var(--text3);font-size:9px;letter-spacing:1.5px;margin-bottom:8px;}
+.q-item{display:flex;align-items:center;gap:6px;background:var(--q-item);border:1px solid var(--q-border);border-radius:7px;padding:7px 8px;margin-bottom:3px;cursor:grab;user-select:none;}
+.q-key{color:#FF6B6B;font-weight:bold;font-family:monospace;font-size:12px;}
+.del-btn{background:transparent;border:none;color:var(--del);font-size:14px;line-height:1;padding:1px 3px;margin-left:auto;flex-shrink:0;}
+#start-btn{margin-top:8px;padding:10px;width:100%;background:linear-gradient(135deg,#FF6B6B,#d94040);border:none;border-radius:9px;color:#fff;font-weight:bold;font-size:13px;}
+
+/* ── PRACTICE ── */
+#practice{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#prac-bar{background:var(--prac-bar);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+#exit-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 13px;border-radius:7px;font-size:12px;}
+.zoom-ctrl{display:flex;align-items:center;gap:6px;}
+.zoom-btn{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--border2);background:transparent;color:var(--text2);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;}
+#zoom-slider{-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border2);outline:none;width:100px;cursor:pointer;}
+#zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#FF6B6B;cursor:pointer;}
+#zoom-val{font-size:10px;color:var(--text3);font-family:monospace;min-width:28px;text-align:center;}
+#prac-grid{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-wrap:wrap;gap:16px;align-content:flex-start;background:var(--bg);}
+.prac-card{background:var(--card);border-radius:12px;padding:14px 18px;border:2px solid var(--border2);display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:border-color 0.15s,box-shadow 0.15s;}
+.prac-card.chord-match{border-color:#6BCB77;box-shadow:0 0 18px 4px rgba(107,203,119,0.5);}
+
+/* ── FILTER ── */
+.filter-bar{display:flex;gap:2px;background:var(--border2);border-radius:7px;padding:2px;}
+.filter-btn{padding:3px 10px;border:none;border-radius:5px;background:transparent;color:var(--text3);font-size:10px;font-family:Georgia,serif;cursor:pointer;}
+.filter-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+
+/* ── QUEUE MGMT ── */
+.q-mgmt{display:flex;gap:4px;margin-bottom:8px;}
+.q-mgmt-btn{flex:1;padding:5px 4px;border:1.5px solid var(--border2);border-radius:6px;background:transparent;color:var(--text2);font-size:9px;font-family:Georgia,serif;cursor:pointer;}
+.q-mgmt-btn:hover{background:rgba(128,128,128,0.08);}
+#q-list-name{font-size:10px;color:var(--text2);text-align:center;margin-bottom:6px;font-style:italic;}
+.save-popup{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;}
+.save-popup.open{display:flex;}
+.save-box{background:var(--popup-bg);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,0.3);min-width:280px;max-width:340px;}
+.save-box input{width:100%;padding:8px;border:1px solid var(--border2);border-radius:6px;background:var(--card);color:var(--text);font-size:12px;font-family:Georgia,serif;margin:8px 0;}
+.save-list-item{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border2);border-radius:7px;margin-bottom:4px;cursor:pointer;}
+.save-list-item:hover{background:rgba(128,128,128,0.08);}
+.save-list-item .sl-name{font-size:11px;font-weight:bold;color:var(--text);flex:1;}
+.save-list-item .sl-info{font-size:9px;color:var(--text3);}
+.save-list-item .sl-del{background:transparent;border:none;color:var(--del);font-size:14px;cursor:pointer;padding:2px 4px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;font-family:Georgia,serif;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;white-space:nowrap;}
+</style>
+</head>
+<body class="theme-grey">
+<div id="toast"></div>
+
+<!-- SAVE POPUP -->
+<div class="save-popup" id="save-popup" onclick="closeSavePopup(event)">
+  <div class="save-box" onclick="event.stopPropagation()">
+    <div class="popup-title" id="save-popup-title">💾 LİSTEYİ KAYDET</div>
+    <div id="save-content"></div>
+  </div>
+</div>
+
+<!-- METRO POPUP OVERLAY -->
+<div class="popup-overlay" id="metro-overlay" onclick="closeMetroPopup(event)">
+  <div class="popup-box" id="metro-popup-box" onclick="event.stopPropagation()">
+    <div class="popup-title">🥁 METRONOM</div>
+    <div class="popup-row">
+      <span class="popup-label">Hız (BPM)</span>
+      <button class="bpm-btn" onclick="changeBpm(-5)">−</button>
+      <span id="bpm-display">80</span>
+      <button class="bpm-btn" onclick="changeBpm(+5)">+</button>
+    </div>
+    <div class="popup-row">
+      <span class="popup-label"></span>
+      <input type="range" id="bpm-slider" min="40" max="200" value="80" oninput="setBpm(+this.value)">
+    </div>
+    <div class="popup-row">
+      <span class="popup-label">Ölçü</span>
+      <select id="meter-select" onchange="setMeter(this.value)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--card);color:var(--text);cursor:pointer;">
+        <option value="4/4">4/4</option>
+        <option value="3/4">3/4</option>
+        <option value="2/4">2/4</option>
+        <option value="6/8">6/8</option>
+        <option value="7/8">7/8 (aksak)</option>
+        <option value="9/8">9/8 (aksak)</option>
+      </select>
+    </div>
+    <div class="popup-row" id="grouping-row" style="display:none">
+      <span class="popup-label">Gruplama</span>
+      <select id="grouping-select" onchange="setGrouping(this.value)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--card);color:var(--text);cursor:pointer;">
+      </select>
+    </div>
+    <button id="metro-toggle" onclick="toggleMetro()">▶ Başlat</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div style="font-size:19px">🎸</div>
+  <div style="flex:1">
+    <div class="title">Chordhood</div>
+    <div class="sub">Web Beta · by Ali B. · Elektro gitar akor rehberi</div>
+  </div>
+  <!-- Filter -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">Hepsi</button>
+    <button class="filter-btn" onclick="setFilter('open',this)">Açık</button>
+    <button class="filter-btn" onclick="setFilter('barre',this)">Barre</button>
+  </div>
+  <!-- Metronome button -->
+  <button class="hdr-btn" id="metro-btn" onclick="toggleMetroPopup()">
+    <span class="hdr-icon">🥁</span>
+    <span class="hdr-lbl">Metro</span>
+    <div id="metro-light"></div>
+  </button>
+  <!-- Theme -->
+  <button class="hdr-btn" onclick="cycleTheme()">
+    <span class="hdr-icon" id="themeIcon">🌗</span>
+    <span class="hdr-lbl" id="themeLbl">Gri</span>
+  </button>
+  <!-- Rotate -->
+  <button class="hdr-btn" onclick="rotate()">
+    <span class="hdr-icon" id="rotIcon">⟳</span>
+    <span class="hdr-lbl" id="rotLbl">Sağ ↔</span>
+  </button>
+</div>
+
+<div id="body">
+  <div id="left"></div>
+  <div id="center">
+    <div style="margin-bottom:16px">
+      <div id="chord-title" style="font-size:44px;font-weight:bold;color:#FF6B6B;font-family:monospace;line-height:1"></div>
+      <div id="chord-turkish" style="font-size:15px;color:#555;margin-top:2px"></div>
+      <div id="chord-count" style="font-size:10px;color:var(--text3);margin-top:1px"></div>
+    </div>
+    <div id="variations"></div>
+    <div style="margin-top:20px;color:var(--text4);font-size:10px">✕ = tel çalma · ○ = boş tel çal</div>
+  </div>
+  <div id="right">
+    <div class="q-title">PRATİK KUYRUĞU</div>
+    <div id="q-list-name"></div>
+    <div class="q-mgmt">
+      <button class="q-mgmt-btn" onclick="queueNew()">📄 Yeni</button>
+      <button class="q-mgmt-btn" onclick="showLoadPopup()">📂 Yükle</button>
+      <button class="q-mgmt-btn" onclick="showSavePopup()">💾 Kaydet</button>
+    </div>
+    <div id="queue-empty" style="color:var(--text3);font-size:11px;text-align:center;padding:14px 0;line-height:1.9">
+      Akor kartındaki<br><span style="color:#6BCB77;font-size:13px">+ Kuyruğa Ekle</span><br>butonunu kullan
+    </div>
+    <div id="queue-list"></div>
+    <button id="start-btn" onclick="startPractice()" style="display:none">▶ Pratik Başlat</button>
+    <button id="clear-btn" onclick="clearQueue()" style="display:none;margin-top:6px;padding:7px;width:100%;background:transparent;border:1px solid rgba(255,100,100,0.3);border-radius:8px;color:#cc5555;font-size:12px;cursor:pointer;">🗑 Kuyruğu Temizle</button>
+    <button id="print-btn" onclick="printQueue()" style="display:none;margin-top:4px;padding:7px;width:100%;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;">🖨 Yazdır</button>
+    <div id="q-hint" style="display:none;color:var(--text3);font-size:10px;text-align:center;margin-top:4px">En az 2 akor ekle</div>
+  </div>
+</div>
+
+<div id="practice">
+  <div id="prac-bar">
+    <button id="exit-btn" onclick="exitPractice()">← Çık</button>
+    <div id="prac-count" style="flex:1;color:var(--text3);font-size:12px"></div>
+    <div class="zoom-ctrl">
+      <span style="color:var(--text3);font-size:10px">Boyut:</span>
+      <button class="zoom-btn" onclick="zoomChange(-0.1)">−</button>
+      <input type="range" id="zoom-slider" min="30" max="120" value="100" oninput="setZoom(+this.value)">
+      <button class="zoom-btn" onclick="zoomChange(+0.1)">+</button>
+      <span id="zoom-val">100%</span>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <span style="color:var(--text3);font-size:10px">Akor İsimleri</span>
+      <span class="switch"><input type="checkbox" id="names-toggle" onchange="toggleNames(this.checked)"><span class="slider-sw"></span></span>
+    </label>
+  </div>
+  <div id="prac-grid"></div>
+</div>
+
+<script>
+const FC={1:'#FF6B6B',2:'#FFD93D',3:'#6BCB77',4:'#4D96FF'};
+const FL={1:'İşaret',2:'Orta',3:'Yüzük',4:'Serçe'};
+// String display order: index 0 = high e (TOP), index 5 = low E (BOTTOM)
+// frets/fingers arrays are [lowE,A,D,G,B,highE] = si 0..5
+// We display si=5 at top (y=tp), si=0 at bottom (y=tp+5*ss)
+// So getY(si) = tp + (5-si)*ss
+const SN_DISPLAY = ['e','B','G','D','A','E']; // top to bottom display labels
+
+const CHORDS={
+  // ── MAJOR ──────────────────────────────────────────────────────────────────
+  C:{t:'Do',g:'Major',v:[
+    {l:'Açık pozisyon',f:[-1,3,2,0,1,0],fi:[0,3,2,0,1,0],b:1,br:[]},
+    {l:'Barre A-şekli (3.perde)',f:[-1,3,5,5,5,3],fi:[0,1,2,3,4,1],b:3,br:[{fret:3,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (8.perde)',f:[8,10,10,9,8,8],fi:[1,3,4,2,1,1],b:8,br:[{fret:8,from:0,to:5,finger:1}]},
+  ]},
+  Db:{t:'Re♭',g:'Major',v:[
+    {l:'Barre A-şekli (4.perde)',f:[-1,4,6,6,6,4],fi:[0,1,2,3,4,1],b:4,br:[{fret:4,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (9.perde)',f:[9,11,11,10,9,9],fi:[1,3,4,2,1,1],b:9,br:[{fret:9,from:0,to:5,finger:1}]},
+  ]},
+  D:{t:'Re',g:'Major',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,3,2],fi:[0,0,0,1,3,2],b:1,br:[]},
+    {l:'Barre A-şekli (5.perde)',f:[-1,5,7,7,7,5],fi:[0,1,2,3,4,1],b:5,br:[{fret:5,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (10.perde)',f:[10,12,12,11,10,10],fi:[1,3,4,2,1,1],b:10,br:[{fret:10,from:0,to:5,finger:1}]},
+  ]},
+  Eb:{t:'Mi♭',g:'Major',v:[
+    {l:'Barre A-şekli (6.perde)',f:[-1,6,8,8,8,6],fi:[0,1,2,3,4,1],b:6,br:[{fret:6,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (11.perde)',f:[11,13,13,12,11,11],fi:[1,3,4,2,1,1],b:11,br:[{fret:11,from:0,to:5,finger:1}]},
+  ]},
+  E:{t:'Mi',g:'Major',v:[
+    {l:'Açık pozisyon',f:[0,2,2,1,0,0],fi:[0,2,3,1,0,0],b:1,br:[]},
+    {l:'Barre E-şekli (12.perde)',f:[12,14,14,13,12,12],fi:[1,3,4,2,1,1],b:12,br:[{fret:12,from:0,to:5,finger:1}]},
+  ]},
+  F:{t:'Fa',g:'Major',v:[
+    {l:'Barre E-şekli (1.perde)',f:[1,3,3,2,1,1],fi:[1,3,4,2,1,1],b:1,br:[{fret:1,from:0,to:5,finger:1}]},
+    {l:'Mini F (4 tel)',f:[-1,-1,3,2,1,1],fi:[0,0,3,2,1,1],b:1,br:[{fret:1,from:4,to:5,finger:1}]},
+    {l:'Barre A-şekli (8.perde)',f:[-1,8,10,10,10,8],fi:[0,1,2,3,4,1],b:8,br:[{fret:8,from:1,to:5,finger:1}]},
+  ]},
+  Fsharp:{t:'Fa#',g:'Major',v:[
+    {l:'Barre E-şekli (2.perde)',f:[2,4,4,3,2,2],fi:[1,3,4,2,1,1],b:2,br:[{fret:2,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (9.perde)',f:[-1,9,11,11,11,9],fi:[0,1,2,3,4,1],b:9,br:[{fret:9,from:1,to:5,finger:1}]},
+  ]},
+  G:{t:'Sol',g:'Major',v:[
+    {l:'Açık (standart)',f:[3,2,0,0,0,3],fi:[2,1,0,0,0,3],b:1,br:[]},
+    {l:'Açık (alternatif)',f:[3,2,0,0,3,3],fi:[2,1,0,0,3,4],b:1,br:[]},
+    {l:'Barre E-şekli (3.perde)',f:[3,5,5,4,3,3],fi:[1,3,4,2,1,1],b:3,br:[{fret:3,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (10.perde)',f:[-1,10,12,12,12,10],fi:[0,1,2,3,4,1],b:10,br:[{fret:10,from:1,to:5,finger:1}]},
+  ]},
+  Ab:{t:'La♭',g:'Major',v:[
+    {l:'Barre A-şekli (11.perde)',f:[-1,11,13,13,13,11],fi:[0,1,2,3,4,1],b:11,br:[{fret:11,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (4.perde)',f:[4,6,6,5,4,4],fi:[1,3,4,2,1,1],b:4,br:[{fret:4,from:0,to:5,finger:1}]},
+  ]},
+  A:{t:'La',g:'Major',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,2,2,0],fi:[0,0,1,2,3,0],b:1,br:[]},
+    {l:'Açık (tek barre)',f:[-1,0,2,2,2,0],fi:[0,0,1,1,1,0],b:1,br:[{fret:2,from:2,to:4,finger:1}]},
+    {l:'Barre E-şekli (5.perde)',f:[5,7,7,6,5,5],fi:[1,3,4,2,1,1],b:5,br:[{fret:5,from:0,to:5,finger:1}]},
+  ]},
+  Bb:{t:'Si♭',g:'Major',v:[
+    {l:'Barre A-şekli (1.perde)',f:[-1,1,3,3,3,1],fi:[0,1,2,3,4,1],b:1,br:[{fret:1,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (6.perde)',f:[6,8,8,7,6,6],fi:[1,3,4,2,1,1],b:6,br:[{fret:6,from:0,to:5,finger:1}]},
+  ]},
+  B:{t:'Si',g:'Major',v:[
+    {l:'Barre A-şekli (2.perde)',f:[-1,2,4,4,4,2],fi:[0,1,2,3,4,1],b:2,br:[{fret:2,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (7.perde)',f:[7,9,9,8,7,7],fi:[1,3,4,2,1,1],b:7,br:[{fret:7,from:0,to:5,finger:1}]},
+  ]},
+
+  // ── MINOR ──────────────────────────────────────────────────────────────────
+  Cm:{t:'Do minör',g:'Minor',v:[
+    {l:'Barre A-şekli (3.perde)',f:[-1,3,5,5,4,3],fi:[0,1,3,4,2,1],b:3,br:[{fret:3,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (8.perde)',f:[8,10,10,8,8,8],fi:[1,3,4,1,1,1],b:8,br:[{fret:8,from:0,to:5,finger:1}]},
+  ]},
+  Dbm:{t:'Re♭ minör',g:'Minor',v:[
+    {l:'Barre A-şekli (4.perde)',f:[-1,4,6,6,5,4],fi:[0,1,3,4,2,1],b:4,br:[{fret:4,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (9.perde)',f:[9,11,11,9,9,9],fi:[1,3,4,1,1,1],b:9,br:[{fret:9,from:0,to:5,finger:1}]},
+  ]},
+  Dm:{t:'Re minör',g:'Minor',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,3,1],fi:[0,0,0,2,3,1],b:1,br:[]},
+    {l:'Barre A-şekli (5.perde)',f:[-1,5,7,7,6,5],fi:[0,1,3,4,2,1],b:5,br:[{fret:5,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (10.perde)',f:[10,12,12,10,10,10],fi:[1,3,4,1,1,1],b:10,br:[{fret:10,from:0,to:5,finger:1}]},
+  ]},
+  Ebm:{t:'Mi♭ minör',g:'Minor',v:[
+    {l:'Barre A-şekli (6.perde)',f:[-1,6,8,8,7,6],fi:[0,1,3,4,2,1],b:6,br:[{fret:6,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (11.perde)',f:[11,13,13,11,11,11],fi:[1,3,4,1,1,1],b:11,br:[{fret:11,from:0,to:5,finger:1}]},
+  ]},
+  Em:{t:'Mi minör',g:'Minor',v:[
+    {l:'Açık pozisyon',f:[0,2,2,0,0,0],fi:[0,2,3,0,0,0],b:1,br:[]},
+    {l:'Barre E-şekli (12.perde)',f:[12,14,14,12,12,12],fi:[1,3,4,1,1,1],b:12,br:[{fret:12,from:0,to:5,finger:1}]},
+  ]},
+  Fm:{t:'Fa minör',g:'Minor',v:[
+    {l:'Barre E-şekli (1.perde)',f:[1,3,3,1,1,1],fi:[1,3,4,1,1,1],b:1,br:[{fret:1,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (8.perde)',f:[-1,8,10,10,9,8],fi:[0,1,3,4,2,1],b:8,br:[{fret:8,from:1,to:5,finger:1}]},
+  ]},
+  Fsharpm:{t:'Fa# minör',g:'Minor',v:[
+    {l:'Barre E-şekli (2.perde)',f:[2,4,4,2,2,2],fi:[1,3,4,1,1,1],b:2,br:[{fret:2,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (9.perde)',f:[-1,9,11,11,10,9],fi:[0,1,3,4,2,1],b:9,br:[{fret:9,from:1,to:5,finger:1}]},
+  ]},
+  Gm:{t:'Sol minör',g:'Minor',v:[
+    {l:'Barre E-şekli (3.perde)',f:[3,5,5,3,3,3],fi:[1,3,4,1,1,1],b:3,br:[{fret:3,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (10.perde)',f:[-1,10,12,12,11,10],fi:[0,1,3,4,2,1],b:10,br:[{fret:10,from:1,to:5,finger:1}]},
+  ]},
+  Abm:{t:'La♭ minör',g:'Minor',v:[
+    {l:'Barre E-şekli (4.perde)',f:[4,6,6,4,4,4],fi:[1,3,4,1,1,1],b:4,br:[{fret:4,from:0,to:5,finger:1}]},
+    {l:'Barre A-şekli (11.perde)',f:[-1,11,13,13,12,11],fi:[0,1,3,4,2,1],b:11,br:[{fret:11,from:1,to:5,finger:1}]},
+  ]},
+  Am:{t:'La minör',g:'Minor',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,2,1,0],fi:[0,0,2,3,1,0],b:1,br:[]},
+    {l:'Barre E-şekli (5.perde)',f:[5,7,7,5,5,5],fi:[1,3,4,1,1,1],b:5,br:[{fret:5,from:0,to:5,finger:1}]},
+  ]},
+  Bbm:{t:'Si♭ minör',g:'Minor',v:[
+    {l:'Barre A-şekli (1.perde)',f:[-1,1,3,3,2,1],fi:[0,1,3,4,2,1],b:1,br:[{fret:1,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (6.perde)',f:[6,8,8,6,6,6],fi:[1,3,4,1,1,1],b:6,br:[{fret:6,from:0,to:5,finger:1}]},
+  ]},
+  Bm:{t:'Si minör',g:'Minor',v:[
+    {l:'Barre A-şekli (2.perde)',f:[-1,2,4,4,3,2],fi:[0,1,3,4,2,1],b:2,br:[{fret:2,from:1,to:5,finger:1}]},
+    {l:'Barre E-şekli (7.perde)',f:[7,9,9,7,7,7],fi:[1,3,4,1,1,1],b:7,br:[{fret:7,from:0,to:5,finger:1}]},
+  ]},
+
+  // ── DOM 7 ──────────────────────────────────────────────────────────────────
+  C7:{t:'Do 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[-1,3,2,3,1,0],fi:[0,3,2,4,1,0],b:1,br:[]},
+    {l:'Barre A-şekli (3.perde)',f:[-1,3,5,3,5,3],fi:[0,1,3,1,4,1],b:3,br:[{fret:3,from:1,to:5,finger:1}]},
+  ]},
+  D7:{t:'Re 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,1,2],fi:[0,0,0,2,1,3],b:1,br:[]},
+    {l:'Barre A-şekli (5.perde)',f:[-1,5,7,5,7,5],fi:[0,1,3,1,4,1],b:5,br:[{fret:5,from:1,to:5,finger:1}]},
+  ]},
+  E7:{t:'Mi 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[0,2,0,1,0,0],fi:[0,2,0,1,0,0],b:1,br:[]},
+    {l:'Barre (12.perde)',f:[12,14,12,13,12,12],fi:[1,3,1,2,1,1],b:12,br:[{fret:12,from:0,to:5,finger:1}]},
+  ]},
+  F7:{t:'Fa 7',g:'Dom. 7',v:[
+    {l:'Barre E-şekli (1.perde)',f:[1,3,1,2,1,1],fi:[1,3,1,2,1,1],b:1,br:[{fret:1,from:0,to:5,finger:1}]},
+  ]},
+  G7:{t:'Sol 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[3,2,0,0,0,1],fi:[3,2,0,0,0,1],b:1,br:[]},
+    {l:'Barre E-şekli (3.perde)',f:[3,5,3,4,3,3],fi:[1,3,1,2,1,1],b:3,br:[{fret:3,from:0,to:5,finger:1}]},
+  ]},
+  A7:{t:'La 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,0,2,0],fi:[0,0,2,0,3,0],b:1,br:[]},
+    {l:'Barre E-şekli (5.perde)',f:[5,7,5,6,5,5],fi:[1,3,1,2,1,1],b:5,br:[{fret:5,from:0,to:5,finger:1}]},
+  ]},
+  B7:{t:'Si 7',g:'Dom. 7',v:[
+    {l:'Açık pozisyon',f:[-1,2,1,2,0,2],fi:[0,2,1,3,0,4],b:1,br:[]},
+    {l:'Barre E-şekli (7.perde)',f:[7,9,7,8,7,7],fi:[1,3,1,2,1,1],b:7,br:[{fret:7,from:0,to:5,finger:1}]},
+  ]},
+
+  // ── MAJOR 7 ────────────────────────────────────────────────────────────────
+  Cmaj7:{t:'Do maj7',g:'Major 7',v:[
+    {l:'Açık pozisyon',f:[-1,3,2,0,0,0],fi:[0,3,2,0,0,0],b:1,br:[]},
+    {l:'Barre E-şekli (8.perde)',f:[8,10,9,9,8,8],fi:[1,4,2,3,1,1],b:8,br:[{fret:8,from:0,to:5,finger:1}]},
+  ]},
+  Dmaj7:{t:'Re maj7',g:'Major 7',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,2,2],fi:[0,0,0,1,2,3],b:1,br:[]},
+  ]},
+  Emaj7:{t:'Mi maj7',g:'Major 7',v:[
+    {l:'Açık pozisyon',f:[0,2,1,1,0,0],fi:[0,3,2,1,0,0],b:1,br:[]},
+  ]},
+  Fmaj7:{t:'Fa maj7',g:'Major 7',v:[
+    {l:'Pozisyon 1',f:[-1,-1,3,2,1,0],fi:[0,0,3,2,1,0],b:1,br:[]},
+    {l:'Barre (1.perde)',f:[1,0,2,2,1,0],fi:[1,0,3,4,2,0],b:1,br:[]},
+  ]},
+  Gmaj7:{t:'Sol maj7',g:'Major 7',v:[
+    {l:'Açık pozisyon',f:[3,2,0,0,0,2],fi:[2,1,0,0,0,3],b:1,br:[]},
+  ]},
+  Abmaj7:{t:'La♭ maj7',g:'Major 7',v:[
+    {l:'Barre E-şekli (4.perde)',f:[4,6,5,5,4,4],fi:[1,3,2,2,1,1],b:4,br:[{fret:4,from:0,to:5,finger:1}]},
+  ]},
+  Amaj7:{t:'La maj7',g:'Major 7',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,1,2,0],fi:[0,0,2,1,3,0],b:1,br:[]},
+  ]},
+  Bbmaj7:{t:'Si♭ maj7',g:'Major 7',v:[
+    {l:'Barre (1.perde)',f:[-1,1,3,2,3,1],fi:[0,1,3,2,4,1],b:1,br:[{fret:1,from:1,to:5,finger:1}]},
+  ]},
+  Bmaj7:{t:'Si maj7',g:'Major 7',v:[
+    {l:'Barre (2.perde)',f:[-1,2,4,3,4,2],fi:[0,1,3,2,4,1],b:2,br:[{fret:2,from:1,to:5,finger:1}]},
+  ]},
+
+  // ── MINOR 7 ────────────────────────────────────────────────────────────────
+  Am7:{t:'La m7',g:'Minor 7',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,0,1,0],fi:[0,0,2,0,1,0],b:1,br:[]},
+    {l:'Barre (5.perde)',f:[5,7,5,5,5,5],fi:[1,3,1,1,1,1],b:5,br:[{fret:5,from:0,to:5,finger:1}]},
+  ]},
+  Bm7:{t:'Si m7',g:'Minor 7',v:[
+    {l:'Açık pozisyon',f:[-1,2,4,2,3,2],fi:[0,1,3,1,2,1],b:2,br:[{fret:2,from:1,to:5,finger:1}]},
+    {l:'Barre (7.perde)',f:[7,9,7,7,7,7],fi:[1,3,1,1,1,1],b:7,br:[{fret:7,from:0,to:5,finger:1}]},
+  ]},
+  Cm7:{t:'Do m7',g:'Minor 7',v:[
+    {l:'Barre (3.perde)',f:[-1,3,5,3,4,3],fi:[0,1,3,1,2,1],b:3,br:[{fret:3,from:1,to:5,finger:1}]},
+  ]},
+  Dm7:{t:'Re m7',g:'Minor 7',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,1,1],fi:[0,0,0,2,1,1],b:1,br:[{fret:1,from:4,to:5,finger:1}]},
+    {l:'Barre (5.perde)',f:[-1,5,7,5,6,5],fi:[0,1,3,1,2,1],b:5,br:[{fret:5,from:1,to:5,finger:1}]},
+  ]},
+  Em7:{t:'Mi m7',g:'Minor 7',v:[
+    {l:'Açık pozisyon',f:[0,2,0,0,0,0],fi:[0,2,0,0,0,0],b:1,br:[]},
+    {l:'Açık (alternatif)',f:[0,2,2,0,3,0],fi:[0,2,3,0,4,0],b:1,br:[]},
+  ]},
+  Fm7:{t:'Fa m7',g:'Minor 7',v:[
+    {l:'Barre E-şekli (1.perde)',f:[1,3,1,1,1,1],fi:[1,3,1,1,1,1],b:1,br:[{fret:1,from:0,to:5,finger:1}]},
+  ]},
+  Gm7:{t:'Sol m7',g:'Minor 7',v:[
+    {l:'Barre E-şekli (3.perde)',f:[3,5,3,3,3,3],fi:[1,3,1,1,1,1],b:3,br:[{fret:3,from:0,to:5,finger:1}]},
+    {l:'Açık pozisyon',f:[-1,1,3,0,3,3],fi:[0,1,3,0,4,4],b:1,br:[]},
+  ]},
+
+  // ── SUS ────────────────────────────────────────────────────────────────────
+  Asus2:{t:'La sus2',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,2,0,0],fi:[0,0,2,3,0,0],b:1,br:[]},
+  ]},
+  Asus4:{t:'La sus4',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,2,3,0],fi:[0,0,1,2,4,0],b:1,br:[]},
+  ]},
+  Dsus2:{t:'Re sus2',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,3,0],fi:[0,0,0,1,3,0],b:1,br:[]},
+  ]},
+  Dsus4:{t:'Re sus4',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,2,3,3],fi:[0,0,0,1,3,4],b:1,br:[]},
+  ]},
+  Esus4:{t:'Mi sus4',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[0,2,2,2,0,0],fi:[0,1,2,3,0,0],b:1,br:[]},
+  ]},
+  Gsus2:{t:'Sol sus2',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[3,0,0,2,3,3],fi:[2,0,0,1,3,4],b:1,br:[]},
+  ]},
+  Gsus4:{t:'Sol sus4',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[3,3,0,0,1,3],fi:[3,4,0,0,1,2],b:1,br:[]},
+  ]},
+  Csus2:{t:'Do sus2',g:'Sus',v:[
+    {l:'Açık pozisyon',f:[-1,3,0,0,1,3],fi:[0,2,0,0,1,3],b:1,br:[]},
+  ]},
+
+  // ── ADD9 ───────────────────────────────────────────────────────────────────
+  Cadd9:{t:'Do add9',g:'Add9',v:[
+    {l:'Açık pozisyon',f:[-1,3,2,0,3,0],fi:[0,3,2,0,4,0],b:1,br:[]},
+  ]},
+  Dadd9:{t:'Re add9',g:'Add9',v:[
+    {l:'Açık pozisyon',f:[-1,5,4,2,3,0],fi:[0,4,3,1,2,0],b:2,br:[]},
+  ]},
+  Eadd9:{t:'Mi add9',g:'Add9',v:[
+    {l:'Açık pozisyon',f:[0,2,2,1,0,2],fi:[0,2,3,1,0,4],b:1,br:[]},
+  ]},
+  Gadd9:{t:'Sol add9',g:'Add9',v:[
+    {l:'Açık pozisyon',f:[3,2,0,2,3,3],fi:[2,1,0,3,4,4],b:1,br:[{fret:3,from:4,to:5,finger:4}]},
+  ]},
+  Aadd9:{t:'La add9',g:'Add9',v:[
+    {l:'Açık pozisyon',f:[-1,0,2,4,2,0],fi:[0,0,1,4,2,0],b:1,br:[]},
+  ]},
+
+  // ── DIM ────────────────────────────────────────────────────────────────────
+  Bdim:{t:'Si dim',g:'Dim',v:[
+    {l:'Açık pozisyon',f:[-1,2,3,4,3,-1],fi:[0,1,2,4,3,0],b:1,br:[]},
+  ]},
+  Cdim:{t:'Do dim',g:'Dim',v:[
+    {l:'Pozisyon 1',f:[-1,3,4,5,4,-1],fi:[0,1,2,4,3,0],b:3,br:[]},
+  ]},
+  Ddim:{t:'Re dim',g:'Dim',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,1,3,1],fi:[0,0,0,1,3,2],b:1,br:[]},
+  ]},
+  Edim:{t:'Mi dim',g:'Dim',v:[
+    {l:'Açık pozisyon',f:[0,1,2,0,-1,0],fi:[0,1,2,0,0,0],b:1,br:[]},
+  ]},
+  Adim:{t:'La dim',g:'Dim',v:[
+    {l:'Açık pozisyon',f:[-1,0,1,2,1,-1],fi:[0,0,1,3,2,0],b:1,br:[]},
+  ]},
+
+  // ── AUG ────────────────────────────────────────────────────────────────────
+  Caug:{t:'Do aug',g:'Aug',v:[
+    {l:'Pozisyon 1',f:[-1,3,2,1,1,0],fi:[0,4,3,1,2,0],b:1,br:[]},
+  ]},
+  Daug:{t:'Re aug',g:'Aug',v:[
+    {l:'Açık pozisyon',f:[-1,-1,0,3,3,2],fi:[0,0,0,2,3,1],b:1,br:[]},
+  ]},
+  Eaug:{t:'Mi aug',g:'Aug',v:[
+    {l:'Açık pozisyon',f:[0,3,2,1,1,0],fi:[0,4,3,1,2,0],b:1,br:[]},
+  ]},
+  Gaug:{t:'Sol aug',g:'Aug',v:[
+    {l:'Pozisyon 1',f:[3,2,1,0,0,3],fi:[4,3,2,0,0,1],b:1,br:[]},
+  ]},
+  Aaug:{t:'La aug',g:'Aug',v:[
+    {l:'Açık pozisyon',f:[-1,0,3,2,2,1],fi:[0,0,4,2,3,1],b:1,br:[]},
+  ]},
+
+  // ── MINOR 7b5 ──────────────────────────────────────────────────────────────
+  Bm7b5:{t:'Si m7b5',g:'Minor 7b5',v:[
+    {l:'Açık pozisyon',f:[-1,2,3,2,3,-1],fi:[0,1,3,2,4,0],b:1,br:[]},
+  ]},
+  Am7b5:{t:'La m7b5',g:'Minor 7b5',v:[
+    {l:'Açık pozisyon',f:[-1,0,1,2,1,-1],fi:[0,0,1,3,2,0],b:1,br:[]},
+  ]},
+  Em7b5:{t:'Mi m7b5',g:'Minor 7b5',v:[
+    {l:'Açık pozisyon',f:[0,1,2,0,3,0],fi:[0,1,2,0,3,0],b:1,br:[]},
+  ]},
+};
+
+const GROUPS=[
+  {label:'Major',    keys:['C','Db','D','Eb','E','F','Fsharp','G','Ab','A','Bb','B']},
+  {label:'Minor',    keys:['Cm','Dbm','Dm','Ebm','Em','Fm','Fsharpm','Gm','Abm','Am','Bbm','Bm']},
+  {label:'Dom. 7',   keys:['C7','D7','E7','F7','G7','A7','B7']},
+  {label:'Major 7',  keys:['Cmaj7','Dmaj7','Emaj7','Fmaj7','Gmaj7','Abmaj7','Amaj7','Bbmaj7','Bmaj7']},
+  {label:'Minor 7',  keys:['Am7','Bm7','Cm7','Dm7','Em7','Fm7','Gm7']},
+  {label:'Sus',      keys:['Asus2','Asus4','Csus2','Dsus2','Dsus4','Esus4','Gsus2','Gsus4']},
+  {label:'Add9',     keys:['Cadd9','Dadd9','Eadd9','Gadd9','Aadd9']},
+  {label:'Dim',      keys:['Adim','Bdim','Cdim','Ddim','Edim']},
+  {label:'Aug',      keys:['Caug','Daug','Eaug','Gaug','Aaug']},
+  {label:'Minor 7b5',keys:['Am7b5','Bm7b5','Em7b5']},
+];
+
+let selectedKey='C', queue=[], viewModeIdx=0, practiceScale=1, currentFilter='all', activeListName='', showBigNames=false;
+const VIEW_MODES=[
+  {rot:0,  mirror:false, label:'Sağ ↔'},
+  {rot:90, mirror:false, label:'Sağ ↕'},
+  {rot:0,  mirror:true,  label:'Sol ↔'},
+  {rot:90, mirror:true,  label:'Sol ↕'},
+];
+const THEMES=['grey','dark','light'];
+const THEME_ICONS={grey:'🌗',dark:'🌑',light:'☀️'};
+const THEME_LBLS={grey:'Gri',dark:'Koyu',light:'Açık'};
+let themeIdx=0;
+
+// ─── LOCALSTORAGE ─────────────────────────────────────────────────────────────
+function saveQueue(){
+  try { localStorage.setItem('btg_queue', JSON.stringify(queue)); } catch(e){}
+}
+function loadQueue(){
+  try {
+    const saved = localStorage.getItem('btg_queue');
+    if(saved) queue = JSON.parse(saved).filter(item => CHORDS[item.key] && CHORDS[item.key].v[item.varIdx]);
+  } catch(e){ queue=[]; }
+}
+function clearQueue(){
+  queue=[];
+  saveQueue();
+  renderQueue();
+}
+
+function cycleTheme(){
+  themeIdx=(themeIdx+1)%3;
+  const t=THEMES[themeIdx];
+  document.body.className='theme-'+t;
+  document.getElementById('themeIcon').textContent=THEME_ICONS[t];
+  document.getElementById('themeLbl').textContent=THEME_LBLS[t];
+  renderCenter();
+  if(document.getElementById('practice').style.display==='flex') renderPractice();
+}
+
+function getThemeColors(){
+  const dark=themeIdx===1;
+  return {
+    fretLine: dark?'#252535':'#bbb',
+    string:   dark?'#444455':'#999',
+    nutColor: '#C8A96E',
+    openColor:'#3aaa44',
+    mutedColor:'#cc3333',
+    labelColor:dark?'#555':'#888',
+    fretNumColor:dark?'#666':'#888',
+  };
+}
+
+// ─── DIAGRAM ─────────────────────────────────────────────────────────────────
+// frets/fingers index: 0=lowE, 1=A, 2=D, 3=G, 4=B, 5=highE
+// Display: highE (si=5) at TOP, lowE (si=0) at BOTTOM
+// getY(si) = tp + (5-si)*ss  →  si=5 gives tp (top), si=0 gives tp+5*ss (bottom)
+
+function makeDiagram(vari, rot, compact, mirror) {
+  const N=5, fw=compact?30:46, ss=compact?19:29;
+  const lp=compact?38:54, rp=compact?10:14, tp=compact?11:15;
+  const dr=compact?8:12, fs=compact?7:10, ls=compact?7:9;
+  const bp=compact?14:18; // bottom padding for fret number
+  const W=lp+N*fw+rp, H=tp+5*ss+(vari.b>1?bp:tp);
+  const {f,fi,b,br}=vari, off=b>1?b-1:0;
+
+  // si=5 (highE) at top (y=tp), si=0 (lowE) at bottom (y=tp+5*ss)
+  const gy=si=>tp+(5-si)*ss;
+  const gx=fret=>lp+(fret-1-off)*fw+fw/2;
+
+  const tc=getThemeColors();
+  // When mirror active, counter-flip text so it reads correctly
+  const tf=mirror?' style="transform:scaleX(-1);transform-box:fill-box;transform-origin:center"':'';
+  let s='';
+  // Nut or fret number below
+  if(b===1) s+=`<rect x="${lp-5}" y="${tp}" width="6" height="${5*ss}" rx="2" fill="${tc.nutColor}"/>`;
+  else s+=`<text x="${lp+N*fw/2}" y="${tp+5*ss+(compact?11:15)}" text-anchor="middle" fill="${tc.fretNumColor}" font-size="${compact?8:11}" font-family="monospace"${tf}>${b}. perde</text>`;
+  // Fret lines (vertical)
+  for(let i=0;i<=N;i++) s+=`<line x1="${lp+i*fw}" y1="${tp}" x2="${lp+i*fw}" y2="${tp+5*ss}" stroke="${tc.fretLine}" stroke-width="1"/>`;
+  // Strings (horizontal)
+  for(let si=0;si<6;si++){
+    const sw=Math.max(0.6,1.4-si*0.14);
+    s+=`<line x1="${lp}" y1="${gy(si)}" x2="${lp+N*fw}" y2="${gy(si)}" stroke="${tc.string}" stroke-width="${sw}"/>`;
+  }
+  // Barres
+  for(const barre of br){
+    const y1=Math.min(gy(barre.from),gy(barre.to));
+    const y2=Math.max(gy(barre.from),gy(barre.to));
+    s+=`<rect x="${gx(barre.fret)-dr}" y="${y1-dr}" width="${dr*2}" height="${y2-y1+dr*2}" rx="${dr}" fill="${FC[barre.finger]}" opacity="0.9"/>`;
+  }
+  // Dots
+  for(let si=0;si<6;si++){
+    if(f[si]<=0) continue;
+    const fing=fi[si],cx=gx(f[si]),cy=gy(si);
+    s+=`<circle cx="${cx}" cy="${cy}" r="${dr}" fill="${FC[fing]||'#bbb'}"/>`;
+    s+=`<text x="${cx}" y="${cy+fs*0.38}" text-anchor="middle" fill="#111" font-size="${fs}" font-weight="bold" font-family="monospace"${tf}>${fing}</text>`;
+  }
+  // Open/Muted markers
+  for(let si=0;si<6;si++){
+    const xp=lp-15,yp=gy(si);
+    if(f[si]===0) s+=`<text x="${xp}" y="${yp+4}" text-anchor="middle" fill="${tc.openColor}" font-size="${compact?11:14}" font-weight="bold"${tf}>○</text>`;
+    else if(f[si]===-1) s+=`<text x="${xp}" y="${yp+4}" text-anchor="middle" fill="${tc.mutedColor}" font-size="${compact?9:12}" font-weight="bold"${tf}>✕</text>`;
+  }
+  // String name labels
+  for(let si=0;si<6;si++){
+    const displayIdx=5-si;
+    s+=`<text x="${lp-28}" y="${gy(si)+4}" text-anchor="middle" fill="${tc.labelColor}" font-size="${ls}" font-family="monospace"${tf}>${SN_DISPLAY[displayIdx]}</text>`;
+  }
+
+  // Apply rotation + mirror via CSS transform
+  const isT=rot===90;
+  const boxW=isT?H:W, boxH=isT?W:H;
+  const transforms=[];
+  if(mirror) transforms.push('scaleX(-1)');
+  if(rot) transforms.push(`rotate(${rot}deg)`);
+  const tfmStr=transforms.length?`transform:${transforms.join(' ')};transform-origin:center center;`:'';
+  const svgStyle=`style="${tfmStr}display:block"`;
+
+  return `<div style="width:${boxW}px;height:${boxH}px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" ${svgStyle}>${s}</svg>
+  </div>`;
+}
+
+function makeLegend(fi,small){
+  const used=[1,2,3,4].filter(f=>fi.includes(f));
+  return `<div class="legend">${used.map(f=>`
+    <div class="legend-item" style="background:${FC[f]}15;border:1px solid ${FC[f]}33">
+      <div class="legend-dot" style="background:${FC[f]};width:${small?13:15}px;height:${small?13:15}px;font-size:${small?8:9}px">${f}</div>
+      <span style="font-size:${small?8:10}px">${FL[f]}</span>
+    </div>`).join('')}</div>`;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderLeft(){
+  let h='';
+  for(const g of GROUPS){
+    const av=g.keys.filter(k=>{
+      const ch=CHORDS[k];
+      if(!ch) return false;
+      if(currentFilter==='open') return ch.v.some(v=>v.b===1 && v.br.length===0);
+      if(currentFilter==='barre') return ch.v.some(v=>v.b>1 || v.br.length>0);
+      return true;
+    });
+    if(!av.length) continue;
+    h+=`<div class="group-label">${g.label.toUpperCase()}</div>`;
+    for(const k of av){
+      const ch=CHORDS[k];
+      h+=`<button class="chord-btn${k===selectedKey?' active':''}" onclick="selectChord('${k}')">
+        <div class="cn">${k.replace('sharp','#')}</div>
+        <div class="ct">${ch.t}</div>
+      </button>`;
+    }
+  }
+  document.getElementById('left').innerHTML=h;
+}
+
+function renderCenter(){
+  const ch=CHORDS[selectedKey];
+  document.getElementById('chord-title').textContent=selectedKey.replace('sharp','#');
+  document.getElementById('chord-turkish').textContent=ch.t;
+
+  // ── Proximity sort: if queue non-empty, sort variations by hand-center distance
+  let sortedVariations = ch.v.map((v,i)=>({v,i}));
+  let proximityIdx = -1; // which variation index is closest
+
+  if(queue.length > 0){
+    const lastItem = queue[queue.length-1];
+    const lastChord = CHORDS[lastItem.key];
+    const lastV = lastChord.v[lastItem.varIdx];
+    // Calculate hand center: average of fretted positions (ignore open=0 and muted=-1)
+    const handCenter = (frets) => {
+      const fretted = frets.filter(f => f > 0);
+      return fretted.length > 0 ? fretted.reduce((a,b)=>a+b,0) / fretted.length : 0;
+    };
+    const lastCenter = handCenter(lastV.f);
+    sortedVariations.sort((a,b)=>{
+      return Math.abs(handCenter(a.v.f) - lastCenter) - Math.abs(handCenter(b.v.f) - lastCenter);
+    });
+    proximityIdx = sortedVariations[0].i;
+  }
+
+  // ── Filter voicings
+  if(currentFilter==='open') sortedVariations = sortedVariations.filter(({v})=>v.b===1 && v.br.length===0);
+  else if(currentFilter==='barre') sortedVariations = sortedVariations.filter(({v})=>v.b>1 || v.br.length>0);
+
+  document.getElementById('chord-count').textContent=sortedVariations.length+'/'+ch.v.length+' pozisyon'+(queue.length>0?' · sıralama: kuyruğa yakınlık':'');
+
+  let h='';
+  sortedVariations.forEach(({v,i},rank)=>{
+    const isClosest = queue.length > 0 && rank === 0;
+    h+=`<div class="var-card"${isClosest?' style="border-color:rgba(107,203,119,0.5);box-shadow:0 0 0 2px rgba(107,203,119,0.18);"':''}>
+      ${isClosest?`<div style="font-size:9px;color:#4aaa55;background:rgba(107,203,119,0.12);border-radius:6px;padding:3px 8px;margin-bottom:2px;align-self:stretch;text-align:center;">📍 Kuyruktaki önceki akora yakın pozisyon</div>`:''}
+      <div class="var-label">${v.l}</div>
+      ${makeDiagram(v,VIEW_MODES[viewModeIdx].rot,false,VIEW_MODES[viewModeIdx].mirror)}
+      ${makeLegend(v.fi,false)}
+      <button class="add-btn" onclick="addToQueue('${selectedKey}',${i})">
+        <span style="font-size:14px">+</span> Kuyruğa Ekle
+      </button>
+    </div>`;
+  });
+  document.getElementById('variations').innerHTML=h;
+}
+
+function renderQueue(){
+  const empty=document.getElementById('queue-empty');
+  const list=document.getElementById('queue-list');
+  const sb=document.getElementById('start-btn');
+  const hint=document.getElementById('q-hint');
+  empty.style.display=queue.length===0?'block':'none';
+  let h='';
+  queue.forEach((item,i)=>{
+    const ch=CHORDS[item.key],v=ch.v[item.varIdx];
+    h+=`<div class="q-item" draggable="true"
+      ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="dragDrop(event,${i})">
+      <span style="color:var(--text4);font-size:12px">⠿</span>
+      <div style="flex:1;min-width:0">
+        <div><span class="q-key">${item.key.replace('sharp','#')}</span>
+          <span style="color:var(--text2);font-size:9px;margin-left:5px">${ch.t}</span></div>
+        <div style="color:var(--text3);font-size:8px;margin-top:1px">${v.l}</div>
+      </div>
+      <button class="del-btn" onclick="removeFromQueue(${i})">×</button>
+    </div>`;
+  });
+  list.innerHTML=h;
+  sb.style.display=queue.length>1?'block':'none';
+  hint.style.display=queue.length===1?'block':'none';
+  document.getElementById('clear-btn').style.display=queue.length>0?'block':'none';
+  document.getElementById('print-btn').style.display=queue.length>0?'block':'none';
+}
+
+function renderPractice(){
+  document.getElementById('prac-count').textContent=queue.length+' akor';
+  const compact=practiceScale<0.7;
+  let r='';
+  queue.forEach(item=>{
+    const ch=CHORDS[item.key],v=ch.v[item.varIdx];
+    const nameStyle=showBigNames
+      ? `<span style="font-size:26px;font-weight:bold;color:#FF6B6B;font-family:monospace;line-height:1">${item.key.replace('sharp','#')}</span>
+         <span style="font-size:22px;font-weight:bold;color:var(--text);line-height:1">${ch.t}</span>`
+      : `<span style="font-size:26px;font-weight:bold;color:#FF6B6B;font-family:monospace;line-height:1">${item.key.replace('sharp','#')}</span>
+         <span style="color:var(--text2);font-size:11px">${ch.t}</span>`;
+    r+=`<div class="prac-card" style="zoom:${practiceScale}">
+        <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap">
+          ${nameStyle}
+        </div>
+        <div style="color:var(--text3);font-size:10px">${v.l}</div>
+        ${makeDiagram(v,VIEW_MODES[viewModeIdx].rot,compact,VIEW_MODES[viewModeIdx].mirror)}
+        ${makeLegend(v.fi,true)}
+      </div>`;
+  });
+  document.getElementById('prac-grid').innerHTML=r;
+}
+
+function toggleNames(on){
+  showBigNames=on;
+  renderPractice();
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function selectChord(key){selectedKey=key;renderLeft();renderCenter();}
+
+function addToQueue(key,varIdx){
+  queue.push({key,varIdx,id:Date.now()+Math.random()});
+  saveQueue();
+  renderQueue();
+  renderCenter(); // proximity sort güncelle
+}
+
+function removeFromQueue(i){
+  queue.splice(i,1);
+  saveQueue();
+  renderQueue();
+  renderCenter(); // proximity sort güncelle
+}
+
+function rotate(){
+  viewModeIdx=(viewModeIdx+1)%4;
+  const mode=VIEW_MODES[viewModeIdx];
+  document.getElementById('rotLbl').textContent=mode.label;
+  if(mode.mirror) showToast('🎸 Solak modu: Diyagram sol el için aynalandı');
+  renderCenter();
+  if(document.getElementById('practice').style.display==='flex') renderPractice();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.opacity='1';
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{ t.style.opacity='0'; },2500);
+}
+
+function startPractice(){
+  document.getElementById('body').style.display='none';
+  document.getElementById('practice').style.display='flex';
+  renderPractice();
+}
+
+function exitPractice(){
+  document.getElementById('practice').style.display='none';
+  document.getElementById('body').style.display='flex';
+}
+
+function setZoom(pct){
+  practiceScale=Math.min(1.2, Math.max(0.3, pct/100));
+  document.getElementById('zoom-slider').value=Math.round(practiceScale*100);
+  document.getElementById('zoom-val').textContent=Math.round(practiceScale*100)+'%';
+  renderPractice();
+}
+function zoomChange(delta){
+  setZoom(Math.round((practiceScale+delta)*100));
+}
+
+let dragSrcIdx=null;
+function dragStart(e,i){dragSrcIdx=i;}
+function dragOver(e){e.preventDefault();}
+function dragDrop(e,i){
+  e.preventDefault();
+  if(dragSrcIdx===null||dragSrcIdx===i)return;
+  const m=queue.splice(dragSrcIdx,1)[0];
+  queue.splice(i,0,m);
+  dragSrcIdx=null;
+  saveQueue();
+  renderQueue();
+}
+
+// ─── METRONOME ────────────────────────────────────────────────────────────────
+let audioCtx = null;
+let metroRunning = false;
+let bpm = 80;
+let beatsPerBar = 4;
+let currentBeat = 0;
+let nextBeatTime = 0;
+let metroTimerId = null;
+
+// Meter/grouping system
+const METERS = {
+  '4/4':  { beats: 4, groupings: [[4]],           labels: ['4/4'] },
+  '3/4':  { beats: 3, groupings: [[3]],           labels: ['3/4'] },
+  '2/4':  { beats: 2, groupings: [[2]],           labels: ['2/4'] },
+  '6/8':  { beats: 6, groupings: [[3,3]],         labels: ['3+3'] },
+  '7/8':  { beats: 7, groupings: [[2,2,3],[3,2,2],[2,3,2]], labels: ['2+2+3','3+2+2','2+3+2'] },
+  '9/8':  { beats: 9, groupings: [[2,2,2,3],[3,2,2,2],[2,3,2,2]], labels: ['2+2+2+3','3+2+2+2','2+3+2+2'] },
+};
+let currentMeter = '4/4';
+let currentGroupingIdx = 0;
+
+// Returns set of beat indices that are accented (start of each group)
+function getAccentBeats(){
+  const m = METERS[currentMeter];
+  const grouping = m.groupings[currentGroupingIdx] || m.groupings[0];
+  const accents = new Set();
+  let pos = 0;
+  for(const g of grouping){ accents.add(pos); pos += g; }
+  return accents;
+}
+
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function scheduleClick(time, accentType){
+  // accentType: 'main' (beat 0), 'sub' (group start), 'normal'
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.value = accentType === 'main' ? 1200 : accentType === 'sub' ? 1050 : 900;
+  const vol = accentType === 'main' ? 0.4 : accentType === 'sub' ? 0.32 : 0.2;
+  gain.gain.setValueAtTime(vol, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+  osc.start(time); osc.stop(time + 0.05);
+}
+
+function flashLight(accentType){
+  const light = document.getElementById('metro-light');
+  light.className = accentType === 'main' ? 'ml-accent' : accentType === 'sub' ? 'ml-green' : 'ml-beat';
+  setTimeout(()=>{ light.className = ''; }, 120);
+}
+
+function scheduler(){
+  if(!metroRunning) return;
+  const ctx = getAudioCtx();
+  const accents = getAccentBeats();
+  while(nextBeatTime < ctx.currentTime + 0.1){
+    const accentType = currentBeat === 0 ? 'main' : accents.has(currentBeat) ? 'sub' : 'normal';
+    scheduleClick(nextBeatTime, accentType);
+    const delay = Math.max(0, (nextBeatTime - ctx.currentTime) * 1000);
+    (function(beat, at){
+      setTimeout(()=>{ if(metroRunning){ currentBeat = beat; flashLight(at); }}, delay);
+    })(currentBeat, accentType);
+    currentBeat = (currentBeat + 1) % beatsPerBar;
+    nextBeatTime += 60.0 / bpm;
+  }
+  metroTimerId = setTimeout(scheduler, 25);
+}
+
+function toggleMetro(){
+  const btn = document.getElementById('metro-toggle');
+  if(metroRunning){
+    metroRunning = false;
+    clearTimeout(metroTimerId);
+    btn.textContent = '▶ Başlat';
+    btn.classList.remove('running');
+    document.getElementById('metro-light').className = '';
+    document.getElementById('metro-btn').classList.remove('active');
+  } else {
+    const ctx = getAudioCtx();
+    if(ctx.state === 'suspended') ctx.resume();
+    metroRunning = true; currentBeat = 0;
+    nextBeatTime = ctx.currentTime + 0.05;
+    btn.textContent = '■ Durdur';
+    btn.classList.add('running');
+    document.getElementById('metro-btn').classList.add('active');
+    scheduler();
+  }
+}
+
+function changeBpm(delta){ setBpm(Math.min(200, Math.max(40, bpm + delta))); }
+function setBpm(val){
+  bpm = val;
+  document.getElementById('bpm-display').textContent = bpm;
+  document.getElementById('bpm-slider').value = bpm;
+}
+
+function setMeter(val){
+  currentMeter = val;
+  const m = METERS[val];
+  beatsPerBar = m.beats;
+  currentBeat = 0;
+  currentGroupingIdx = 0;
+  // Show/hide grouping row
+  const row = document.getElementById('grouping-row');
+  const sel = document.getElementById('grouping-select');
+  if(m.groupings.length > 1){
+    row.style.display = 'flex';
+    sel.innerHTML = m.labels.map((l,i)=>`<option value="${i}">${l}</option>`).join('');
+  } else {
+    row.style.display = 'none';
+  }
+}
+
+function setGrouping(val){
+  currentGroupingIdx = parseInt(val);
+  currentBeat = 0;
+}
+
+// ─── PRINT ────────────────────────────────────────────────────────────────────
+function makePrintDiagram(vari){
+  const N=5, fw=36, ss=22, lp=42, rp=10, tp=10, dr=9, fs=8, ls=7;
+  const bp=vari.b>1?14:tp;
+  const W=lp+N*fw+rp, H=tp+5*ss+bp;
+  const {f,fi,b,br}=vari, off=b>1?b-1:0;
+  const gy=si=>tp+(5-si)*ss;
+  const gx=fret=>lp+(fret-1-off)*fw+fw/2;
+  let s='';
+  if(b===1) s+=`<rect x="${lp-4}" y="${tp}" width="5" height="${5*ss}" rx="1" fill="#333"/>`;
+  else s+=`<text x="${lp+N*fw/2}" y="${tp+5*ss+12}" text-anchor="middle" fill="#666" font-size="9" font-family="monospace">${b}. perde</text>`;
+  for(let i=0;i<=N;i++) s+=`<line x1="${lp+i*fw}" y1="${tp}" x2="${lp+i*fw}" y2="${tp+5*ss}" stroke="#aaa" stroke-width="0.7"/>`;
+  for(let si=0;si<6;si++){
+    const sw=Math.max(0.5,1.2-si*0.12);
+    s+=`<line x1="${lp}" y1="${gy(si)}" x2="${lp+N*fw}" y2="${gy(si)}" stroke="#555" stroke-width="${sw}"/>`;
+  }
+  for(const barre of br){
+    const y1=Math.min(gy(barre.from),gy(barre.to)),y2=Math.max(gy(barre.from),gy(barre.to));
+    s+=`<rect x="${gx(barre.fret)-dr}" y="${y1-dr}" width="${dr*2}" height="${y2-y1+dr*2}" rx="${dr}" fill="#555" opacity="0.8"/>`;
+  }
+  for(let si=0;si<6;si++){
+    if(f[si]<=0) continue;
+    const cx=gx(f[si]),cy=gy(si);
+    s+=`<circle cx="${cx}" cy="${cy}" r="${dr}" fill="#222"/>`;
+    s+=`<text x="${cx}" y="${cy+fs*0.38}" text-anchor="middle" fill="#fff" font-size="${fs}" font-weight="bold" font-family="monospace">${fi[si]}</text>`;
+  }
+  for(let si=0;si<6;si++){
+    const xp=lp-12,yp=gy(si);
+    if(f[si]===0) s+=`<text x="${xp}" y="${yp+3}" text-anchor="middle" fill="#333" font-size="11" font-weight="bold">○</text>`;
+    else if(f[si]===-1) s+=`<text x="${xp}" y="${yp+3}" text-anchor="middle" fill="#999" font-size="9" font-weight="bold">✕</text>`;
+  }
+  for(let si=0;si<6;si++){
+    s+=`<text x="${lp-24}" y="${gy(si)+3}" text-anchor="middle" fill="#888" font-size="${ls}" font-family="monospace">${SN_DISPLAY[5-si]}</text>`;
+  }
+  return `<svg width="${W}" height="${H}" style="display:block">${s}</svg>`;
+}
+
+function printQueue(){
+  if(!queue.length) return;
+  const date=new Date().toLocaleDateString('tr-TR');
+  const listName=activeListName||'Pratik Listesi';
+  let cards='';
+  queue.forEach(item=>{
+    const ch=CHORDS[item.key],v=ch.v[item.varIdx];
+    const notes=[];
+    const seen=new Set();
+    const ON=[4,9,2,7,11,4], NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const TN=['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+    v.f.forEach((fr,si)=>{
+      if(fr<0) return;
+      const n=(ON[si]+fr)%12;
+      if(!seen.has(n)){seen.add(n);notes.push(NN[n]+'('+TN[n]+')');}
+    });
+    cards+=`<div style="break-inside:avoid;border:1px solid #ccc;border-radius:10px;padding:12px;display:inline-flex;flex-direction:column;align-items:center;gap:4px;margin:6px;vertical-align:top">
+      <div style="font-size:20px;font-weight:bold;font-family:monospace">${item.key.replace('sharp','#')}</div>
+      <div style="font-size:12px;color:#555">${ch.t}</div>
+      <div style="font-size:9px;color:#888">${v.l}</div>
+      ${makePrintDiagram(v)}
+      <div style="font-size:8px;color:#888;display:flex;gap:6px">${[1,2,3,4].filter(x=>v.fi.includes(x)).map(x=>`<span>●${x}=${['','İşaret','Orta','Yüzük','Serçe'][x]}</span>`).join('')}</div>
+      <div style="font-size:7px;color:#aaa">${notes.join(' · ')}</div>
+    </div>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chordhood - ${listName}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Georgia,serif;padding:20px}
+@media print{@page{size:landscape;margin:12mm}}</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #222;padding-bottom:8px;margin-bottom:16px">
+  <div><span style="font-size:22px;font-weight:bold">Chordhood</span><span style="font-size:11px;color:#888;margin-left:8px">${listName}</span></div>
+  <div style="font-size:10px;color:#888">${date}</div>
+</div>
+<div style="text-align:center">${cards}</div>
+<div style="margin-top:20px;padding-top:8px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:9px;color:#aaa">
+  <span>chordhood.com</span>
+  <span>✕ = çalmayın · ○ = boş tel · ● = parmak numarası</span>
+</div>
+<scr'+'ipt>window.onload=()=>window.print()<\/scr'+'ipt></body></html>`;
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeft();
+  renderCenter();
+}
+
+// ─── QUEUE SAVE/LOAD ─────────────────────────────────────────────────────────
+function getSavedLists(){
+  try { return JSON.parse(localStorage.getItem('btg_lists')||'[]'); } catch(e){ return []; }
+}
+function saveLists(lists){
+  try { localStorage.setItem('btg_lists', JSON.stringify(lists)); } catch(e){}
+}
+function updateListName(){
+  document.getElementById('q-list-name').textContent=activeListName||'';
+}
+
+function queueNew(){
+  if(queue.length>0){
+    if(!confirm('Mevcut kuyruk silinecek. Devam?')) return;
+  }
+  queue=[];activeListName='';
+  saveQueue();updateListName();renderQueue();renderCenter();
+}
+
+function showSavePopup(){
+  if(queue.length===0){ showToast('Kuyruk boş, kaydedilecek bir şey yok'); return; }
+  const el=document.getElementById('save-popup');
+  document.getElementById('save-popup-title').textContent='💾 LİSTEYİ KAYDET';
+  let h=`<input id="save-name" placeholder="Liste adı girin..." value="${activeListName}">`;
+  h+=`<button style="width:100%;padding:8px;border-radius:8px;border:1.5px solid var(--border2);background:rgba(107,203,119,0.12);color:#4aaa55;font-size:13px;font-weight:bold;font-family:Georgia,serif;cursor:pointer" onclick="doSave()">Kaydet</button>`;
+  const lists=getSavedLists();
+  if(lists.length>=20) h+=`<div style="color:#cc5555;font-size:10px;margin-top:6px">Maksimum 20 liste. Yeni kaydetmek için eski bir listeyi silin.</div>`;
+  document.getElementById('save-content').innerHTML=h;
+  el.classList.add('open');
+  setTimeout(()=>document.getElementById('save-name').focus(),100);
+}
+
+function doSave(){
+  const name=document.getElementById('save-name').value.trim();
+  if(!name){ showToast('Liste adı girin'); return; }
+  let lists=getSavedLists();
+  const existing=lists.findIndex(l=>l.name===name);
+  const entry={name, items:queue.map(q=>({key:q.key,varIdx:q.varIdx})), date:new Date().toLocaleDateString('tr-TR'), count:queue.length};
+  if(existing>=0){ lists[existing]=entry; }
+  else if(lists.length>=20){ showToast('Maksimum 20 liste sınırına ulaşıldı'); return; }
+  else { lists.unshift(entry); }
+  saveLists(lists);
+  activeListName=name;updateListName();
+  closeSavePopup();
+  showToast('✓ "'+name+'" kaydedildi');
+}
+
+function showLoadPopup(){
+  const lists=getSavedLists();
+  if(lists.length===0){ showToast('Kayıtlı liste yok'); return; }
+  document.getElementById('save-popup-title').textContent='📂 LİSTE YÜKLE';
+  let h='';
+  lists.forEach((l,i)=>{
+    h+=`<div class="save-list-item">
+      <div style="flex:1;min-width:0" onclick="doLoad(${i})">
+        <div class="sl-name">${l.name}</div>
+        <div class="sl-info">${l.count} akor · ${l.date}</div>
+      </div>
+      <button class="sl-del" onclick="event.stopPropagation();deleteList(${i})">🗑</button>
+    </div>`;
+  });
+  document.getElementById('save-content').innerHTML=h;
+  document.getElementById('save-popup').classList.add('open');
+}
+
+function doLoad(idx){
+  const lists=getSavedLists();
+  const l=lists[idx];
+  if(!l) return;
+  const items=l.items.filter(it=>CHORDS[it.key]&&CHORDS[it.key].v[it.varIdx]);
+  const mode=queue.length>0?confirm('Mevcut kuyruğa eklensin mi?\n\nTamam = Ekle\nİptal = Sıfırla ve yükle'):false;
+  if(mode){
+    items.forEach(it=>queue.push({key:it.key,varIdx:it.varIdx,id:Date.now()+Math.random()}));
+  } else {
+    queue=items.map(it=>({key:it.key,varIdx:it.varIdx,id:Date.now()+Math.random()}));
+  }
+  activeListName=l.name;
+  saveQueue();updateListName();renderQueue();renderCenter();
+  closeSavePopup();
+  showToast('✓ "'+l.name+'" yüklendi');
+}
+
+function deleteList(idx){
+  if(!confirm('Bu liste silinecek. Devam?')) return;
+  let lists=getSavedLists();
+  const name=lists[idx].name;
+  lists.splice(idx,1);
+  saveLists(lists);
+  if(activeListName===name) activeListName='';
+  updateListName();
+  showLoadPopup(); // refresh
+}
+
+function closeSavePopup(e){ document.getElementById('save-popup').classList.remove('open'); }
+
+// ─── POPUP OPEN/CLOSE ─────────────────────────────────────────────────────────
+function toggleMetroPopup(){
+  document.getElementById('metro-overlay').classList.toggle('open');
+}
+function closeMetroPopup(e){ document.getElementById('metro-overlay').classList.remove('open'); }
+
+loadQueue();
+renderLeft();
+renderCenter();
+renderQueue();
+</script>
+</body>
+</html>
